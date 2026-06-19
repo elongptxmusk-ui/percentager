@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="ur">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Haq's Bill Analyzer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --orange:#ff9900; --orange-dk:#e68a00; --orange-lt:#FEBD69;
+  --orange-bg:#fff8ee; --orange-border:#ffd699;
+  --white:#ffffff; --gray-50:#f9fafb; --gray-100:#f3f4f6;
+  --gray-200:#e5e7eb; --gray-400:#9ca3af; --gray-600:#6b7280;
+  --gray-800:#1f2937; --gray-900:#111827;
+  --red-bg:#fff5f5; --red-border:#feb2b2; --red-text:#c53030;
+  --radius-sm:8px; --radius-md:12px; --radius-lg:16px;
+  --shadow-sm:0 1px 3px rgba(0,0,0,0.08);
+}
+body { font-family:'Segoe UI',-apple-system,BlinkMacSystemFont,system-ui,sans-serif; background:var(--gray-100); color:var(--gray-800); min-height:100vh; padding:0 0 40px; -webkit-font-smoothing:antialiased; }
+.header { background:linear-gradient(135deg,var(--orange) 0%,var(--orange-lt) 100%); padding:28px 20px 24px; text-align:center; position:relative; overflow:hidden; }
+.header::after { content:''; position:absolute; bottom:-1px; left:0; right:0; height:20px; background:var(--gray-100); border-radius:20px 20px 0 0; }
+.brand { font-size:11px; font-weight:700; letter-spacing:3px; color:rgba(255,255,255,0.85); text-transform:uppercase; margin-bottom:6px; }
+.header h1 { font-size:24px; font-weight:700; color:#fff; margin-bottom:4px; text-shadow:0 1px 3px rgba(0,0,0,0.15); }
+.header p { font-size:13px; color:rgba(255,255,255,0.88); }
+.container { max-width:540px; margin:0 auto; padding:20px 16px 0; }
+.section-label { font-size:11px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:var(--gray-400); margin-bottom:10px; margin-top:20px; }
+
+/* API Key Box */
+.api-setup { background:#fffbeb; border:1.5px solid #fcd34d; border-radius:var(--radius-md); padding:14px 16px; margin-bottom:16px; }
+.api-setup-title { font-size:13px; font-weight:700; color:#78350f; margin-bottom:8px; }
+.api-input-row { display:flex; gap:8px; align-items:center; }
+.api-input { flex:1; padding:10px 12px; border:1.5px solid #fcd34d; border-radius:var(--radius-sm); font-size:13px; font-family:monospace; color:var(--gray-800); background:#fff; outline:none; transition:border-color 0.2s; }
+.api-input:focus { border-color:var(--orange); }
+.api-input.saved { border-color:#86efac; background:#f0fdf4; }
+.api-save-btn { padding:10px 16px; background:var(--orange); color:#fff; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:700; cursor:pointer; white-space:nowrap; transition:background 0.2s; }
+.api-save-btn:hover { background:var(--orange-dk); }
+.api-hint { font-size:11px; color:#92400e; margin-top:6px; line-height:1.5; }
+
+/* Upload */
+.upload-zone { background:var(--white); border:2px dashed var(--orange-border); border-radius:var(--radius-lg); padding:32px 20px; text-align:center; cursor:pointer; transition:border-color 0.2s,background 0.2s; position:relative; margin-bottom:16px; box-shadow:var(--shadow-sm); }
+.upload-zone:hover,.upload-zone.drag-over { border-color:var(--orange); background:var(--orange-bg); }
+.upload-zone input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+.upload-icon-wrap { width:56px; height:56px; background:var(--orange-bg); border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; border:1.5px solid var(--orange-border); }
+.upload-icon-wrap svg { width:26px; height:26px; }
+.upload-title { font-size:15px; font-weight:600; color:var(--gray-800); margin-bottom:4px; }
+.upload-hint { font-size:12px; color:var(--gray-400); }
+.upload-badge { display:inline-block; margin-top:10px; background:var(--orange-bg); border:1px solid var(--orange-border); color:var(--orange-dk); font-size:11px; font-weight:600; padding:3px 10px; border-radius:20px; }
+#preview-img { max-width:100%; max-height:260px; border-radius:var(--radius-sm); object-fit:contain; display:none; margin:0 auto 14px; border:1px solid var(--gray-200); }
+
+/* Buttons */
+.btn-primary { width:100%; padding:15px; background:var(--orange); color:#fff; border:none; border-radius:var(--radius-md); font-size:16px; font-weight:700; cursor:pointer; display:none; align-items:center; justify-content:center; gap:8px; transition:background 0.2s,transform 0.1s,box-shadow 0.2s; box-shadow:0 4px 14px rgba(255,153,0,0.35); letter-spacing:0.3px; }
+.btn-primary:hover { background:var(--orange-dk); box-shadow:0 4px 18px rgba(255,153,0,0.45); }
+.btn-primary:active { transform:scale(0.98); }
+.btn-primary:disabled { background:var(--gray-200); color:var(--gray-400); cursor:not-allowed; box-shadow:none; }
+.btn-primary svg { width:18px; height:18px; flex-shrink:0; }
+.btn-reset { width:100%; padding:12px; background:var(--white); color:var(--gray-600); border:1.5px solid var(--gray-200); border-radius:var(--radius-md); font-size:14px; font-weight:500; cursor:pointer; transition:all 0.2s; margin-top:4px; }
+.btn-reset:hover { border-color:var(--orange-border); color:var(--orange-dk); background:var(--orange-bg); }
+
+/* Loader */
+.loader { display:none; text-align:center; padding:36px 20px; background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); margin-bottom:16px; }
+.spinner { width:40px; height:40px; border:3px solid var(--orange-bg); border-top-color:var(--orange); border-radius:50%; animation:spin 0.75s linear infinite; margin:0 auto 14px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+.loader-title { font-size:15px; font-weight:600; color:var(--gray-800); margin-bottom:4px; }
+.loader-sub { font-size:12px; color:var(--gray-400); }
+
+/* Error */
+.error-box { display:none; background:var(--red-bg); border:1px solid var(--red-border); border-radius:var(--radius-md); padding:14px 16px; font-size:13px; color:var(--red-text); margin-bottom:16px; line-height:1.6; }
+.error-box strong { display:block; margin-bottom:2px; font-size:14px; }
+
+/* Metric Cards */
+.metric-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:6px; }
+.metric-card { background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius-md); padding:14px 12px; text-align:center; box-shadow:var(--shadow-sm); }
+.metric-card.big { grid-column:1/-1; background:linear-gradient(135deg,var(--orange) 0%,var(--orange-lt) 100%); border-color:var(--orange); padding:20px; }
+.metric-lbl { font-size:10px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--gray-400); margin-bottom:6px; }
+.metric-card.big .metric-lbl { color:rgba(255,255,255,0.85); }
+.metric-val { font-size:20px; font-weight:700; color:var(--gray-900); line-height:1.1; }
+.metric-card.big .metric-val { font-size:38px; color:#fff; text-shadow:0 1px 4px rgba(0,0,0,0.15); }
+.metric-sub { font-size:11px; color:var(--gray-400); margin-top:3px; }
+.metric-card.big .metric-sub { color:rgba(255,255,255,0.75); }
+
+/* Table */
+.table-card { background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow-sm); overflow:hidden; border:1px solid var(--gray-200); }
+.table-card-header { display:flex; align-items:center; gap:8px; padding:14px 16px; border-bottom:1px solid var(--gray-100); background:var(--gray-50); }
+.table-card-header svg { width:16px; height:16px; color:var(--orange); }
+.table-card-title { font-size:13px; font-weight:700; color:var(--gray-800); }
+.table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
+table { width:100%; border-collapse:collapse; font-size:13px; min-width:300px; }
+thead th { padding:9px 14px; text-align:right; font-size:10px; font-weight:700; letter-spacing:0.8px; text-transform:uppercase; color:var(--gray-400); background:var(--gray-50); border-bottom:1px solid var(--gray-200); white-space:nowrap; }
+thead th:first-child,thead th:nth-child(2) { text-align:center; }
+tbody tr { border-bottom:1px solid var(--gray-100); transition:background 0.1s; }
+tbody tr:last-child { border-bottom:none; }
+tbody tr:hover { background:var(--orange-bg); }
+tbody td { padding:10px 14px; text-align:right; color:var(--gray-800); font-size:13px; }
+tbody td:first-child { text-align:center; color:var(--gray-400); font-size:11px; }
+tbody td:nth-child(2) { text-align:center; font-weight:600; }
+tbody td.amount-col { font-weight:600; color:var(--gray-900); }
+.total-row { background:var(--orange-bg) !important; }
+.total-row td { font-weight:700; color:var(--orange-dk); border-top:1.5px solid var(--orange-border); font-size:13px; }
+
+/* Formula */
+.formula-card { background:var(--white); border:1px solid var(--gray-200); border-left:4px solid var(--orange); border-radius:var(--radius-md); padding:16px; box-shadow:var(--shadow-sm); }
+.formula-title { font-size:11px; font-weight:700; letter-spacing:1px; text-transform:uppercase; color:var(--orange); margin-bottom:10px; }
+.formula-row { display:flex; justify-content:space-between; align-items:baseline; padding:5px 0; border-bottom:1px dashed var(--gray-200); gap:8px; }
+.formula-row:last-child { border-bottom:none; }
+.formula-key { font-size:12px; color:var(--gray-600); flex-shrink:0; }
+.formula-eq { font-size:12px; color:var(--gray-800); font-weight:600; text-align:right; }
+.results { display:none; }
+.spacer { height:16px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="brand">Haq's International Delivery Service</div>
+  <h1>Bill Analyzer</h1>
+  <p>Bill ka screenshot upload karein — percentage khud nikal dega</p>
+</div>
+
+<div class="container">
+
+  <div class="api-setup">
+    <div class="api-setup-title">🔑 OpenRouter API Key</div>
+    <div class="api-input-row">
+      <input type="password" class="api-input" id="api-key-input" placeholder="sk-or-v1-..." autocomplete="off" spellcheck="false">
+      <button class="api-save-btn" id="save-btn" onclick="saveKey()">Save</button>
+    </div>
+    <div class="api-hint">Key sirf aapke browser mein save hoti hai — kahi nahi jati ✓</div>
+  </div>
+
+  <div class="section-label" style="margin-top:4px;">Bill Upload</div>
+  <div class="upload-zone" id="upload-zone">
+    <input type="file" id="file-input" accept="image/*" capture="environment">
+    <img id="preview-img" alt="Bill preview">
+    <div id="upload-placeholder">
+      <div class="upload-icon-wrap">
+        <svg viewBox="0 0 24 24" fill="none" stroke="#ff9900" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>
+        </svg>
+      </div>
+      <div class="upload-title">Bill ka screenshot yahan lagayein</div>
+      <div class="upload-hint">Camera se bhi le sakte hain ya gallery se</div>
+      <span class="upload-badge">JPG · PNG · WebP · HEIC</span>
+    </div>
+  </div>
+
+  <div class="error-box" id="error-box">
+    <strong>⚠ Kuch masla hua</strong>
+    <span id="error-msg"></span>
+  </div>
+
+  <button class="btn-primary" id="analyze-btn" onclick="analyze()">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
+    </svg>
+    Analyze Karein
+  </button>
+
+  <div class="spacer"></div>
+
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <div class="loader-title">Bill analyze ho raha hai...</div>
+    <div class="loader-sub">Har row carefully check ho raha hai</div>
+  </div>
+
+  <div class="results" id="results">
+    <div class="section-label">Summary</div>
+    <div class="metric-grid" id="metric-grid"></div>
+    <div class="section-label">Row by Row Detail</div>
+    <div class="table-card">
+      <div class="table-card-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 3h18v18H3zM3 9h18M3 15h18M9 3v18"/>
+        </svg>
+        <span class="table-card-title">Qty x Sale Price Calculation</span>
+      </div>
+      <div class="table-wrap"><table id="detail-table"></table></div>
+    </div>
+    <div class="section-label">Formula Breakdown</div>
+    <div class="formula-card" id="formula-card"></div>
+    <div class="spacer"></div>
+    <button class="btn-reset" onclick="resetTool()">Naya Bill Analyze Karein</button>
+    <div class="spacer"></div>
+  </div>
+
+</div>
+
+<script>
+  let imageBase64 = "", imageMime = "image/jpeg";
+  const fileInput  = document.getElementById("file-input");
+  const previewImg = document.getElementById("preview-img");
+  const placeholder= document.getElementById("upload-placeholder");
+  const analyzeBtn = document.getElementById("analyze-btn");
+  const loader     = document.getElementById("loader");
+  const results    = document.getElementById("results");
+  const errorBox   = document.getElementById("error-box");
+  const errorMsg   = document.getElementById("error-msg");
+  const uploadZone = document.getElementById("upload-zone");
+  const apiInput   = document.getElementById("api-key-input");
+
+  // Load saved key
+  try { const s = localStorage.getItem("haqs_api_key"); if(s){ apiInput.value=s; apiInput.classList.add("saved"); } } catch(e){}
+
+  function saveKey(){
+    const k = apiInput.value.trim();
+    if(!k) return;
+    try { localStorage.setItem("haqs_api_key", k); } catch(e){}
+    apiInput.classList.add("saved");
+    const btn = document.getElementById("save-btn");
+    btn.textContent = "Saved";
+    setTimeout(()=> btn.textContent = "Save", 1600);
+  }
+
+  fileInput.addEventListener("change", e => { const f=e.target.files[0]; if(f) loadFile(f); });
+  uploadZone.addEventListener("dragover", e => { e.preventDefault(); uploadZone.classList.add("drag-over"); });
+  uploadZone.addEventListener("dragleave", ()=> uploadZone.classList.remove("drag-over"));
+  uploadZone.addEventListener("drop", e => {
+    e.preventDefault(); uploadZone.classList.remove("drag-over");
+    const f=e.dataTransfer.files[0]; if(f && f.type.startsWith("image/")) loadFile(f);
+  });
+
+  function loadFile(file){
+    const MAX=1600;
+    const img=new Image(), url=URL.createObjectURL(file);
+    img.onload = ()=>{
+      URL.revokeObjectURL(url);
+      let w=img.width, h=img.height;
+      if(w>MAX||h>MAX){ const sc=MAX/Math.max(w,h); w=Math.round(w*sc); h=Math.round(h*sc); }
+      const cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(img,0,0,w,h);
+      const d=cv.toDataURL("image/jpeg",0.88);
+      imageBase64=d.split(",")[1]; imageMime="image/jpeg";
+      previewImg.src=d; previewImg.style.display="block";
+      placeholder.style.display="none"; analyzeBtn.style.display="flex";
+      errorBox.style.display="none"; results.style.display="none";
+    };
+    img.src=url;
+  }
+
+  async function analyze(){
+    const apiKey = apiInput.value.trim();
+    if(!apiKey || !apiKey.startsWith("sk-or-")){
+      errorMsg.textContent = " OpenRouter API Key daalni zaroori hai (sk-or-v1-...) — upar wale box mein paste karein.";
+      errorBox.style.display="block"; return;
+    }
+    analyzeBtn.disabled=true; loader.style.display="block";
+    results.style.display="none"; errorBox.style.display="none";
+
+    const prompt = `You are an expert OCR data extraction assistant. Your task is to extract data from a bill/invoice table image with ZERO errors.
+
+THE TABLE HAS EXACTLY 4 COLUMNS IN THIS ORDER:
+Column 1: Qty
+Column 2: Pur-Price
+Column 3: Sale-Price
+Column 4: Amount
+
+EXTRACTION RULES — READ CAREFULLY:
+1. Extract ONLY the data rows (not the header row, not the Total row, not the Net Total row)
+2. For each row extract: Column 1 (Qty) and Column 3 (Sale-Price) ONLY
+3. CRITICAL — Do NOT merge or split rows. Each printed line with a Qty number = exactly ONE row
+4. CRITICAL — Commas in numbers are thousand separators: 1,446.00 means 1446.00
+5. CRITICAL — Column 3 (Sale-Price) is the THIRD column, NOT the second column (Pur-Price)
+6. Count all rows carefully before outputting. Do not skip any row. Do not duplicate any row.
+7. Extract the Net Total value from the bottom of the bill
+
+VERIFICATION STEP (do this mentally before output):
+- Count the number of data rows you see in the image
+- Make sure your JSON has exactly that many rows
+- Double-check each Qty value matches what is printed in Column 1
+- Double-check each sale_price matches what is printed in Column 3
+
+OUTPUT FORMAT: Return ONLY this raw JSON, absolutely no markdown, no explanation, no extra text:
+{"rows":[{"qty":4,"sale_price":540.00},{"qty":46,"sale_price":140.00}],"net_total":23890.82}`;
+
+    try {
+      const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "Authorization":"Bearer "+apiKey,
+          "HTTP-Referer":"https://haqs-bill-analyzer.local",
+          "X-Title":"Haqs Bill Analyzer"
+        },
+        body: JSON.stringify({
+          model:"nvidia/nemotron-nano-12b-v2-vl:free",
+          temperature:0,
+          max_tokens:1000,
+          messages:[{
+            role:"user",
+            content:[
+              {type:"image_url",image_url:{url:"data:"+imageMime+";base64,"+imageBase64}},
+              {type:"text",text:prompt}
+            ]
+          }]
+        })
+      });
+
+      if(!res.ok){ const e=await res.json().catch(()=>({})); throw new Error(e.error?.message||"API error: "+res.status); }
+      const data=await res.json();
+      const raw=data.choices?.[0]?.message?.content || "";
+      const clean=raw.replace(/^```[a-z]*\n?/i,"").replace(/\n?```$/i,"").trim();
+      const parsed=JSON.parse(clean);
+
+      let sgt=0;
+      const rows=parsed.rows.map(r=>{
+        const qty=parseFloat(r.qty), sp=parseFloat(r.sale_price);
+        const sa=Math.round(qty*sp*100)/100; sgt+=sa;
+        return {qty,sale_price:sp,sale_amount:sa};
+      });
+      sgt=Math.round(sgt*100)/100;
+      const nt=Math.round(parseFloat(parsed.net_total)*100)/100;
+      const diff=Math.round((sgt-nt)*100)/100;
+      const pct=Math.round((diff/sgt)*10000)/100;
+      showResults({rows,saleGrandTotal:sgt,netTotal:nt,difference:diff,percentage:pct});
+
+    } catch(err){
+      let msg=err.message;
+      if(msg.toLowerCase().includes("failed to fetch")) msg="Network error — internet check karein.";
+      errorMsg.textContent=" "+msg; errorBox.style.display="block";
+    } finally {
+      loader.style.display="none"; analyzeBtn.disabled=false;
+    }
+  }
+
+  const fmt=(n,d=2)=>Number(n).toLocaleString("en-PK",{minimumFractionDigits:d,maximumFractionDigits:d});
+
+  function showResults(d){
+    document.getElementById("metric-grid").innerHTML=`
+      <div class="metric-card"><div class="metric-lbl">Sale Grand Total</div><div class="metric-val">Rs ${fmt(d.saleGrandTotal)}</div><div class="metric-sub">Qty x Sale Price sum</div></div>
+      <div class="metric-card"><div class="metric-lbl">Net Total (Bill)</div><div class="metric-val">Rs ${fmt(d.netTotal)}</div><div class="metric-sub">Bill mein likha hua</div></div>
+      <div class="metric-card"><div class="metric-lbl">Farq (Difference)</div><div class="metric-val">Rs ${fmt(d.difference)}</div><div class="metric-sub">Grand Total - Net Total</div></div>
+      <div class="metric-card big"><div class="metric-lbl">Final Percentage</div><div class="metric-val">${fmt(d.percentage,2)}%</div><div class="metric-sub">Farq / Grand Total x 100</div></div>`;
+
+    const tb=d.rows.map((r,i)=>`<tr><td>${i+1}</td><td>${r.qty}</td><td>Rs ${fmt(r.sale_price)}</td><td class="amount-col">Rs ${fmt(r.sale_amount)}</td></tr>`).join("");
+    document.getElementById("detail-table").innerHTML=`
+      <thead><tr><th>#</th><th>Qty</th><th>Sale Price</th><th>Qty x Sale Price</th></tr></thead>
+      <tbody>${tb}<tr class="total-row"><td colspan="3" style="text-align:left;padding-left:14px;">Grand Total</td><td class="amount-col">Rs ${fmt(d.saleGrandTotal)}</td></tr></tbody>`;
+
+    document.getElementById("formula-card").innerHTML=`
+      <div class="formula-title">Step by Step Formula</div>
+      <div class="formula-row"><span class="formula-key">Sale Grand Total</span><span class="formula-eq">Sum(Qty x Sale Price) = Rs ${fmt(d.saleGrandTotal)}</span></div>
+      <div class="formula-row"><span class="formula-key">Net Total (Bill)</span><span class="formula-eq">Rs ${fmt(d.netTotal)}</span></div>
+      <div class="formula-row"><span class="formula-key">Farq</span><span class="formula-eq">${fmt(d.saleGrandTotal)} - ${fmt(d.netTotal)} = Rs ${fmt(d.difference)}</span></div>
+      <div class="formula-row"><span class="formula-key">Percentage</span><span class="formula-eq">(${fmt(d.difference)} / ${fmt(d.saleGrandTotal)}) x 100 = <strong style="color:#e68a00">${fmt(d.percentage,2)}%</strong></span></div>`;
+
+    results.style.display="block";
+    results.scrollIntoView({behavior:"smooth",block:"start"});
+  }
+
+  function resetTool(){
+    fileInput.value=""; imageBase64="";
+    previewImg.style.display="none"; previewImg.src="";
+    placeholder.style.display="block"; analyzeBtn.style.display="none";
+    results.style.display="none"; errorBox.style.display="none";
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+</script>
+</body>
+</html>
